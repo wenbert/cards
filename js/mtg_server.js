@@ -8,23 +8,35 @@ var server = require('http').createServer(function(req, response){
     response.end();
   });
 });
+
 server.listen(8080);
 
+//REDIS
+//var redis = require("redis"),
+var redis = require("/home/nodejs/node_modules/now/node_modules/socket.io/node_modules/redis"),
+    r = redis.createClient();
+
+r.on("error", function (err) {
+    console.log("Error "+ err);
+});
 
 var nowjs = require("/home/nodejs/node_modules/now");
 var everyone = nowjs.initialize(server);
 
 
-nowjs.on('connect', function(){
+
+nowjs.on('connect', function(game_id){
   this.now.room = "room 1";
   nowjs.getGroup(this.now.room).addUser(this.user.clientId);
   console.log("Joined: " + this.now.name);
 });
 
 
+
 nowjs.on('disconnect', function(){
   console.log("Left: " + this.now.name);
 });
+
 
 everyone.now.changeRoom = function(newRoom){
   nowjs.getGroup(this.now.room).removeUser(this.user.clientId);
@@ -37,6 +49,30 @@ everyone.now.changeRoom = function(newRoom){
 everyone.now.distributeMessage = function(message){
   nowjs.getGroup(this.now.room).now.receiveMessage(this.now.name, message);
 };
+
+everyone.now.createGame = function() {
+    r.incr("game_id", function (err, incr_res){
+        r.sadd("games "+incr_res);
+        //TODO HSET ALL HERE
+        //HSET game:x id x
+        //HSET game:x desc "Blah"
+        //fetchGamesList
+        //then append Game details to list 
+    });
+}
+
+everyone.now.fetchGamesList = function() {
+    r.smembers("games", function (err, smembers_res) {
+        everyone.now.receiveGamesList(smembers_res);
+        console.log('Game list: '+smembers_res);
+    });
+}
+
+everyone.now.fetchGameDetails = function(game_id) {
+    r.hgetall("game:"+game_id, function(err,hgetall_res){
+        everyone.now.appendGameDetailsToList(hgetall_res)
+    });
+}
 
 everyone.now.signalTapCard = function(card_id){
   nowjs.getGroup(this.now.room).now.receiveSignalTapCard(this.now.name, card_id);
@@ -58,14 +94,7 @@ everyone.now.signalTurnPlayer = function() {
 }
 
 
-//REDIS
-//var redis = require("redis"),
-var redis = require("/home/nodejs/node_modules/now/node_modules/socket.io/node_modules/redis"),
-    client = redis.createClient();
 
-client.on("error", function (err) {
-    console.log("Error "+ err);
-});
 
 function guidGenerator() {
     var S4 = function() {
@@ -78,8 +107,8 @@ everyone.now.signalShowRedisCard = function(card_placement, card_slug) {
     var self = this;
     var target = ("cards:"+ card_slug);
 
-    client.incr('card_uid', function(err, uid) {
-        client.hgetall(target, function(err, res) {
+    r.incr('card_uid', function(err, uid) {
+        r.hgetall(target, function(err, res) {
             nowjs.getGroup(self.now.room).now.receiveShowRedisCard(res,uid,card_placement);
             console.log('executing client.hgetall() for: ',target);
         });
