@@ -1,0 +1,9 @@
+This is an attempt to make a Magic: The Gathering multiplayer deck tester.
+
+Pre-requisites:
+1) Nodejs (http://nodejs.org/)
+2) Nowjs (http://nowjs.com)
+3) Redis (http://redis.io)
+4) Node_redis (https://github.com/mranney/node_redis)
+5) Sqlite (for the card database)
+6) Python (to copy the card data to redis)

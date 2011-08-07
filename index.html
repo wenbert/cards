@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>nowjs test</title>
+
+<link href="style.css" rel="stylesheet" type="text/css" media="screen" /> 
+
+<link type="text/css" href="css/pepper-grinder/jquery-ui-1.8.14.custom.css" rel="Stylesheet" />	
+<script type="text/javascript" src="json2.js"></script>
+<script type="text/javascript" src="js/jquery-1.5.1.min.js"></script>
+
+<script type="text/javascript" src="js/jquery-ui-1.8.14.custom.min.js"></script>
+
+<script src="http://192.168.254.165:8080/nowjs/now.js"></script>
+<script type="text/javascript" src="js/jQueryRotate.2.1.js"></script>
+<script>
+$(document).ready(function(){
+    now.receiveMessage = function(name, message){
+        $("#messages").append("<br>" + name + ": " + message);
+    }
+  
+    $("#send-button").click(function(){
+        now.distributeMessage($("#text-input").val());
+        $("#text-input").val("");
+    });
+
+    $(".change").click(function(){
+        now.changeRoom($(this).text());
+    });
+    
+    
+    //cards can only be dragged inside the #board
+    //$(".card").draggable({ containment: "#board", stack: "#board div"  });
+    
+    $(".card").draggable({ containment: "#board", stack: "#board div"  });
+    
+    //dragstart for a card
+    $(".card").bind( "dragstart", function(event, ui) {
+        $(".card").removeClass('current_card');
+        $(this).addClass('current_card');
+    });
+    
+    //dragstop for a card
+    $(".card").bind( "dragstop", function(event, ui) {        
+        //now.signalMoveToLocation($(this).attr('id'),$(this).css('left'),$(this).css('top'));
+    });
+    
+    //click a card
+    $(".card").click(function (e) {
+        $(".card").removeClass('current_card');
+        $(this).addClass('current_card');
+    });
+    
+    //tap/untap a card
+    $(".card").toggle(
+        function () {
+            $(this).rotate({animateTo:90});
+            now.signalTapCard($(this).attr('id'));
+        },
+        function () {
+            $(this).rotate({animateTo:0});
+            now.signalUntapCard($(this).attr('id'));
+    });
+    
+    //drop in battlefield
+    $( "#battlefield").droppable({
+        drop: function( event, ui ) {
+            var dropped_card = ui.draggable.attr('id');
+            var dropped_card_x = ui.draggable.css('left')
+            var dropped_card_y = ui.draggable.css('top')
+            var drop_where = 'battlefield';
+            
+            now.signalMoveToLocation(drop_where, dropped_card,dropped_card_x,dropped_card_y);
+        }
+		});
+		
+		//drop in hand
+		$( "#hand").droppable({
+        drop: function( event, ui ) {
+            var dropped_card = ui.draggable.attr('id');;
+            var dropped_card_x = ui.draggable.css('left');
+            var dropped_card_y = ui.draggable.css('top');
+            var drop_where = 'hand';
+            now.signalMoveToLocation(drop_where, dropped_card,dropped_card_x,dropped_card_y);
+        }
+		});
+		
+    //Nowjs receiveSignalX
+    now.receiveSignalTapCard = function(name, card_id) {
+        $("#"+card_id).rotate({animateTo:90});
+    }
+    now.receiveSignalUntapCard = function(name, card_id) {
+        $("#"+card_id).rotate({animateTo:0});
+    }
+    now.receiveSignalMoveToLocation = function(name, drop_where, card_id, posx, posy) {
+        try {
+        	console.log('dropped card: '+ card_id +' in '+ drop_where +'. left:'+ posx +', top:'+posy);
+        } catch(e) {
+        	console.log("Firebug not installed.");
+        }
+        $("#"+card_id).animate({"left": posx+"px","top": posy+"px"});
+    }
+    
+    $(".redis_test").click(function (e) {
+        now.signalShowRedisCard($(this).val());
+    });
+    
+    now.receiveShowRedisCard = function(card,card_uid) {
+        //alert("creating: "+card.name);
+        //$('#hand').appendTo(card_data.name);
+        var $newcard = $("<div id='"+
+                        card.slug+card_uid+"' class='card'>"+
+                        //"<img src='"+card.imageurl+"' />"+
+                        card.name+"</div>");
+                        
+        $newcard.appendTo('#hand');
+        
+        //make generated card draggable
+        $("#"+card.slug+card_uid).live('mouseover',function(){
+            $(this).draggable();
+        });
+        
+        //make generated card tappable
+        $("#"+card.slug+card_uid).live('click', function() {
+            $(this).toggle(
+                function () {
+                    $(this).rotate({animateTo:90});
+                    now.signalTapCard($(this).attr('id'));
+                },
+                function () {
+                    $(this).rotate({animateTo:0});
+                    now.signalUntapCard($(this).attr('id'));
+            });
+        });
+
+    }
+    
+    now.name = prompt("What's your name?", "");
+    
+    now.signalShowRedisCard('goblin-chieftain');
+    now.signalShowRedisCard('mountain');
+    now.signalShowRedisCard('goblin-guide');
+    
+});
+
+</script>
+
+<style type="text/css">
+
+</style>
+
+</head>
+
+<body>
+<div id="board">
+    <input type="button" class="redis_test" value="lightning-bolt"/>
+    <input type="button" class="redis_test" value="goblin-grenade"/>
+    <div id="battlefield" class="battlefield">
+    </div>
+    <!--<div id="hand" class="hand">
+        <li><div id="card_a" class="card">
+            <div id="card_name">Card A</div>
+        </div></li>
+        <li><div id="card_b" class="card">
+            <div id="card_name">Card B</div>
+        </div></li>
+        <li><div id="card_c" class="card">
+            <div id="card_name">Card C</div>
+        </div></li>
+        <li><div id="card_d" class="card" style="left: 50px; top: 50px;">
+            <div id="card_name">Card D</div>
+            left: 50px;<br/>
+            top: 50px;
+        </div></li>
+    </div> -->
+    <ul id="hand" class="hand">
+    </ul>
+</div>
+<div id="commands">
+<ul>
+    <li>Tap / Untap</li>
+    <li>Power
+        <ul>
+            <li>+1</li>
+            <li>-1</li>
+        </ul>
+    </li>
+    <li>Toughness
+        <ul>
+            <li>+1</li>
+            <li>-1</li>
+        </ul>
+    </li>
+    <li>Counter
+        <ul>
+            <li>+1</li>
+            <li>-1</li>
+        </ul>
+    </li>
+    <li>Move to
+        <ul>
+            <li>Battlefield</li>
+            <li>Graveyard</li>
+            <li>Exile</li>
+            <li>Top of Library</li>
+            <li>Bottom of Library</li>
+            <li>Bottom of Graveyard</li>
+        </ul>
+    </li>
+</ul>
+<ul>
+    <li>Phases
+        <ul>
+            <li>Untap</li>
+            <li>Upkeep</li>
+            <li>Draw</li>
+            <li>First Main</li>
+            <li>Start Combat</li>
+            <li>Declare Attackers</li>
+            <li>Declare Blockers</li>
+            <li>Combat Damage</li>
+            <li>End of Combat</li>
+            <li>Second Main</li>
+            <li>Ending</li>
+            <li>Next Turn</li>
+        </ul>
+    </li>
+</ul>
+</div>
+<br style="clear: both;"/>
+<div>
+    <a href="#" class="change selected">room 1</a> -
+    <a href="#" class="change">room 2</a> -
+    <a href="#" class="change">room 3</a>
+</div>
+<br>
+<div id="messages"><br>You're in room 1</div>
+<input type="text" id="text-input">
+<input type="button" value="Send" id="send-button">
+
+
+</body>
+</html>
