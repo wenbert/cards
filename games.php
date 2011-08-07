@@ -18,7 +18,6 @@ $(document).ready(function(){
     //get ongoing games list
     now.receiveGamesList = function(gameslist_obj) {
         $('#games').empty();
-        
         for (var key in gameslist_obj) {
             var value = gameslist_obj[key];
             now.fetchGameDetails(value);
@@ -28,8 +27,23 @@ $(document).ready(function(){
         }
     }
     
+    now.appendCreatedGame = function(id,desc, creator, players, gametype) {
+        $('#games').append('<li>'+id+') '+desc+'<input type="button" class="join_game" value="Join this game"></li>');
+    }
+    
     $("#getlist").click(function() {
         now.fetchGamesList();
+    });
+    
+    $("#creategame").click(function() {
+        $( "#creategameform" ).dialog({
+            height: 200,
+            modal: true
+        });
+    });
+    
+    $("#submitgame").click( function() {
+        now.createGame($("#desc").val(), "creator_test", $("#players").val(), $("#gametype").val());
     });
 });
 </script>
@@ -44,5 +58,17 @@ $(document).ready(function(){
 <input type="button" id="getlist" value="Click here to get list of games." />
 <ul id="games">
 </ul>
+<div id="creategameform" style="display: none;" title="Create/host a game">
+Description: <input type="text" id="desc" name="desc" /><br/>
+Game Type: <select id="gametype">
+<option value=""></option>
+<option value="Standard">Standard</option>
+<option value="Legacy">Legacy</option>
+</select><br/>
+# of Players: <select id="players">
+<option value="2">2</option>
+</select><br/>
+<input type="button" value="Create Game!" id="submitgame"/>
+</div>
 </body>
 </html>

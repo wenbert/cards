@@ -50,14 +50,16 @@ everyone.now.distributeMessage = function(message){
   nowjs.getGroup(this.now.room).now.receiveMessage(this.now.name, message);
 };
 
-everyone.now.createGame = function() {
+everyone.now.createGame = function(desc, creator, players, gametype) {
     r.incr("game_id", function (err, incr_res){
-        r.sadd("games "+incr_res);
-        //TODO HSET ALL HERE
-        //HSET game:x id x
-        //HSET game:x desc "Blah"
-        //fetchGamesList
-        //then append Game details to list 
+        console.log('***incr_res***'+incr_res);
+        r.sadd("games", incr_res, function(err, sadd_res){
+            console.log('***sadd***'+sadd_res);
+            r.hmset("game:"+incr_res, "id", incr_res, "desc",desc, "players", players, "gametype", gametype, "creator", creator, function(err, hmset_res) {    
+                everyone.now.appendCreatedGame(incr_res, desc, creator, players, gametype);
+                console.log('***RESULT***'+hmset_res);
+            });
+        });
     });
 }
 
