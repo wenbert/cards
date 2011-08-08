@@ -23,15 +23,12 @@ r.on("error", function (err) {
 var nowjs = require("/home/nodejs/node_modules/now");
 var everyone = nowjs.initialize(server);
 
-
-
-nowjs.on('connect', function(game_id){
-  this.now.room = "room 1";
+nowjs.on('connect', function(){
+  //this.now.room = "lobby";
   nowjs.getGroup(this.now.room).addUser(this.user.clientId);
+  this.now.receiveMessage("SERVER", "You're now in " + this.now.room);
   console.log("Joined: " + this.now.name);
 });
-
-
 
 nowjs.on('disconnect', function(){
   console.log("Left: " + this.now.name);
@@ -52,15 +49,23 @@ everyone.now.distributeMessage = function(message){
 
 everyone.now.createGame = function(desc, creator, players, gametype) {
     r.incr("game_id", function (err, incr_res){
-        console.log('***incr_res***'+incr_res);
+        //console.log('***incr_res***'+incr_res);
         r.sadd("games", incr_res, function(err, sadd_res){
-            console.log('***sadd***'+sadd_res);
+            //console.log('***sadd***'+sadd_res);
             r.hmset("game:"+incr_res, "id", incr_res, "desc",desc, "players", players, "gametype", gametype, "creator", creator, function(err, hmset_res) {    
                 everyone.now.appendCreatedGame(incr_res, desc, creator, players, gametype);
-                console.log('***RESULT***'+hmset_res);
+                //console.log('***RESULT***'+hmset_res);
             });
         });
     });
+}
+
+everyone.now.joinGame = function(game_id) {
+    //remove from lobby and join in new room
+    nowjs.getGroup(this.now.room).removeUser(this.user.clientId);
+    nowjs.getGroup(game_id).addUser(this.user.clientId);
+    this.now.room = game_id;
+    this.now.receiveMessage("SERVER", "You're now in " + this.now.room);
 }
 
 everyone.now.fetchGamesList = function() {

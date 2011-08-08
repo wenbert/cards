@@ -22,13 +22,17 @@ $(document).ready(function(){
             var value = gameslist_obj[key];
             now.fetchGameDetails(value);
             now.appendGameDetailsToList = function(gamedetails_obj) {
-                $('#games').append('<li>'+gamedetails_obj.id+') '+gamedetails_obj.desc+'<input type="button" class="join_game" value="Join this game"></li>');
+                $('#games').append('<li>'+gamedetails_obj.id+') '+gamedetails_obj.desc+
+                '<form method="post" action="game.php">'+
+                '<input type="hidden" id="game_id" value="'+gamedetails_obj.id+'"/><input type="submit" class="join_game" value="Join this game">'+
+                '</form>'+
+                '</li>');
             };
         }
     }
     
     now.appendCreatedGame = function(id,desc, creator, players, gametype) {
-        $('#games').append('<li>'+id+') '+desc+'<input type="button" class="join_game" value="Join this game"></li>');
+        $('#games').append('<li>'+id+') '+desc+'<form method="post" action="game.php"><input type="hidden" id="game_id" value="'+gamedetails_obj.id+'"/><input type="submit" class="join_game" value="Join this game"></form></li>');
     }
     
     $("#getlist").click(function() {
@@ -45,6 +49,7 @@ $(document).ready(function(){
     $("#submitgame").click( function() {
         now.createGame($("#desc").val(), "creator_test", $("#players").val(), $("#gametype").val());
     });
+    
 });
 </script>
 <style type="text/css">
