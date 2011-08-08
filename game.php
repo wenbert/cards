@@ -25,7 +25,7 @@ $(document).ready(function(){
     });
 
     now.room = "Sample Room";
-    now.name = "Wenbert";
+    now.name = "Noeme";
  
 });
 
@@ -42,6 +42,10 @@ $(document).ready(function(){
 <input type="text" id="text-input">
 <input type="button" value="Send" id="send-button">
 
-
+<pre>
+<?php
+var_dump($_POST);
+?>
+</pre>
 </body>
 </html>

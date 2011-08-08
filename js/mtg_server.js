@@ -24,44 +24,57 @@ var nowjs = require("/home/nodejs/node_modules/now");
 var everyone = nowjs.initialize(server);
 
 nowjs.on('connect', function(){
-  //this.now.room = "lobby";
-  nowjs.getGroup(this.now.room).addUser(this.user.clientId);
-  this.now.receiveMessage("SERVER", "You're now in " + this.now.room);
-  console.log("Joined: " + this.now.name);
+    //this.now.room = "lobby";
+    nowjs.getGroup(this.now.room).addUser(this.user.clientId);
+    console.log("Joined: " + this.now.name);
+    //this.now.receiveMessage("SERVER", "You're now in " + this.now.room);
+    nowjs.getGroup(this.now.room).now.receiveMessage(this.now.name, "Joined "+this.now.room);
 });
 
 nowjs.on('disconnect', function(){
-  console.log("Left: " + this.now.name);
+    console.log("Left: " + this.now.name);
 });
 
 
 everyone.now.changeRoom = function(newRoom){
-  nowjs.getGroup(this.now.room).removeUser(this.user.clientId);
-  nowjs.getGroup(newRoom).addUser(this.user.clientId);
-  this.now.room = newRoom;
-  this.now.receiveMessage("SERVER", "You're now in " + this.now.room);
+    nowjs.getGroup(this.now.room).removeUser(this.user.clientId);
+    nowjs.getGroup(newRoom).addUser(this.user.clientId);
+    this.now.room = newRoom;
+    this.now.receiveMessage("SERVER", "You're now in " + this.now.room);
 }
 
 
 everyone.now.distributeMessage = function(message){
-  nowjs.getGroup(this.now.room).now.receiveMessage(this.now.name, message);
+    nowjs.getGroup(this.now.room).now.receiveMessage(this.now.name, message);
 };
 
+/*
+This creates a game.
+First, it increments "game_id"
+Then, the value from game_id is added in a Set named "games" - Set in redis
+When the "game_id" is added in Set "games", we create a Hash with the game details
+Finally, we send back the details to the client so that we can append it to the list.
+
+In redis, it would look like this:
+>INCR game_id
+>1
+>SADD games 1
+>HSET game:1 id 1 desc "Blah" players 2 gametype Standard creator Blah
+*/
 everyone.now.createGame = function(desc, creator, players, gametype) {
     r.incr("game_id", function (err, incr_res){
-        //console.log('***incr_res***'+incr_res);
+        console.log('***incr_res***'+incr_res);
         r.sadd("games", incr_res, function(err, sadd_res){
-            //console.log('***sadd***'+sadd_res);
+            console.log('***sadd***'+sadd_res);
             r.hmset("game:"+incr_res, "id", incr_res, "desc",desc, "players", players, "gametype", gametype, "creator", creator, function(err, hmset_res) {    
                 everyone.now.appendCreatedGame(incr_res, desc, creator, players, gametype);
-                //console.log('***RESULT***'+hmset_res);
+                console.log('***RESULT***'+hmset_res);
             });
         });
     });
 }
 
 everyone.now.joinGame = function(game_id) {
-    //remove from lobby and join in new room
     nowjs.getGroup(this.now.room).removeUser(this.user.clientId);
     nowjs.getGroup(game_id).addUser(this.user.clientId);
     this.now.room = game_id;

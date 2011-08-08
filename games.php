@@ -15,7 +15,14 @@
 <script type="text/javascript" src="js/jQueryRotate.2.1.js"></script>
 <script>
 $(document).ready(function(){
-    //get ongoing games list
+    now.receiveMessage = function(name, message){
+        $("#messages").append("<br>" + name + ": " + message);
+    }
+  
+    /*
+    Fetch Set "games" in redis using fetchGamesList(), received by now.receiveGamesList()
+    Loop thru the Set and fetchGamesList()
+    */
     now.receiveGamesList = function(gameslist_obj) {
         $('#games').empty();
         for (var key in gameslist_obj) {
@@ -30,15 +37,24 @@ $(document).ready(function(){
             };
         }
     }
-    
+    /*
+    Append to #games
+    For example, this function is called when a user creates a game.
+    */
     now.appendCreatedGame = function(id,desc, creator, players, gametype) {
-        $('#games').append('<li>'+id+') '+desc+'<form method="post" action="game.php"><input type="hidden" id="game_id" value="'+gamedetails_obj.id+'"/><input type="submit" class="join_game" value="Join this game"></form></li>');
+        $('#games').append('<li>'+id+') '+desc+'<form method="post" action="game.php"><input type="hidden" name="game_id" id="game_id" value="'+gamedetails_obj.id+'"/><input type="submit" class="join_game" value="Join this game"></form></li>');
     }
     
+    /*
+    Calls now.fetchGamesList() on the server, then sends the data back to now.receiveGamesList()
+    */
     $("#getlist").click(function() {
         now.fetchGamesList();
     });
     
+    /*
+    Opens up a jquery dialog box. Nothing special.
+    */
     $("#creategame").click(function() {
         $( "#creategameform" ).dialog({
             height: 200,
@@ -46,10 +62,18 @@ $(document).ready(function(){
         });
     });
     
+    /*
+    When user tries to create game. #submitgame is a button inside #creategameform
+    Values are sent directly to the now.createGame() in the server. 
+    
+    TODO: Sanitize the data?!
+    */
     $("#submitgame").click( function() {
         now.createGame($("#desc").val(), "creator_test", $("#players").val(), $("#gametype").val());
     });
     
+    now.room = "Lobby";
+    now.name = "Noeme";
 });
 </script>
 <style type="text/css">
@@ -63,6 +87,9 @@ $(document).ready(function(){
 <input type="button" id="getlist" value="Click here to get list of games." />
 <ul id="games">
 </ul>
+
+<div id="messages"></div>
+
 <div id="creategameform" style="display: none;" title="Create/host a game">
 Description: <input type="text" id="desc" name="desc" /><br/>
 Game Type: <select id="gametype">
